@@ -1,0 +1,6 @@
+# ninja log v5
+0	14074	1748159550128888962	/lidar3d_detection_ws/PPFromScratch/PP/PointPillars/build/temp.linux-x86_64-cpython-310/pointpillars/ops/voxelization/voxelization.o	f33c9f0fe8e8dd41
+1	14262	1748159550316890421	/lidar3d_detection_ws/PPFromScratch/PP/PointPillars/build/temp.linux-x86_64-cpython-310/pointpillars/ops/voxelization/voxelization_cpu.o	e6948386efeb0329
+1	14968	1748159551024895920	/lidar3d_detection_ws/PPFromScratch/PP/PointPillars/build/temp.linux-x86_64-cpython-310/pointpillars/ops/voxelization/voxelization_cuda.o	49ecc89f86a09415
+0	1480	1748159552828909929	/lidar3d_detection_ws/PPFromScratch/PP/PointPillars/build/temp.linux-x86_64-cpython-310/pointpillars/ops/iou3d/iou3d_kernel.o	61573eacb0524ce0
+0	12983	1748159564328999239	/lidar3d_detection_ws/PPFromScratch/PP/PointPillars/build/temp.linux-x86_64-cpython-310/pointpillars/ops/iou3d/iou3d.o	d10f73c9f9cb13c1
