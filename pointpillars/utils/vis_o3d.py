@@ -1,7 +1,11 @@
 import cv2
 import numpy as np
-import open3d as o3d
 import os
+os.environ["DISPLAY"]="0"
+os.environ["QT_QPA_PLATFORM"] = "xcb"
+os.environ["O3D_USE_X11"] = "1"
+
+import open3d as o3d
 from pointpillars.utils import bbox3d2corners
 
 
@@ -63,38 +67,70 @@ def vis_core(plys):
     # o3d.io.write_pinhole_camera_parameters(os.path.join(PAR, 'viewpoint.json'), param)
     vis.destroy_window()
 
+def vis_pc(points, bboxes=None, labels=None, out_image="output.png"):
+    # Convert Nx3 or Nx4 numpy array to open3d PointCloud
+    if points.shape[1] == 4:
+        points = points[:, :3]
+    pc_o3d = o3d.geometry.PointCloud()
+    pc_o3d.points = o3d.utility.Vector3dVector(points)
 
-def vis_pc(pc, bboxes=None, labels=None):
-    '''
-    pc: ply or np.ndarray (N, 4)
-    bboxes: np.ndarray, (n, 7) or (n, 8, 3)
-    labels: (n, )
-    '''
-    if isinstance(pc, np.ndarray):
-        pc = npy2ply(pc)
-    
-    mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
-    size=10, origin=[0, 0, 0])
+    geometries = [pc_o3d]
 
-    if bboxes is None:
-        vis_core([pc, mesh_frame])
-        return
+    # Optional: add bounding boxes if given
+    if bboxes is not None:
+        for bbox in bboxes:
+            center = bbox[:3]
+            size = bbox[3:6]
+            yaw = bbox[6]
+            R = o3d.geometry.OrientedBoundingBox.get_rotation_matrix_from_axis_angle([0, 0, yaw])
+            obb = o3d.geometry.OrientedBoundingBox(center, R, size)
+            obb.color = (1, 0, 0)
+            geometries.append(obb)
+
+    # Create visualizer in offscreen mode
+    vis = o3d.visualization.Visualizer()
+    vis.create_window(visible=False)
+    for geom in geometries:
+        vis.add_geometry(geom)
+
+    vis.poll_events()
+    vis.update_renderer()
+    vis.capture_screen_image(out_image)
+    vis.destroy_window()
+
+    print(f"Saved visualization to {out_image}")
     
-    if len(bboxes.shape) == 2:
-        bboxes = bbox3d2corners(bboxes)
+# def vis_pc(pc, bboxes=None, labels=None):
+#     '''
+#     pc: ply or np.ndarray (N, 4)
+#     bboxes: np.ndarray, (n, 7) or (n, 8, 3)
+#     labels: (n, )
+#     '''
+#     if isinstance(pc, np.ndarray):
+#         pc = npy2ply(pc)
     
-    vis_objs = [pc, mesh_frame]
-    for i in range(len(bboxes)):
-        bbox = bboxes[i]
-        if labels is None:
-            color = [1, 1, 0]
-        else:
-            if labels[i] >= 0 and labels[i] < 3:
-                color = COLORS[labels[i]]
-            else:
-                color = COLORS[-1]
-        vis_objs.append(bbox_obj(bbox, color=color))
-    vis_core(vis_objs)
+#     mesh_frame = o3d.geometry.TriangleMesh.create_coordinate_frame(
+#     size=10, origin=[0, 0, 0])
+
+#     if bboxes is None:
+#         vis_core([pc, mesh_frame])
+#         return
+    
+#     if len(bboxes.shape) == 2:
+#         bboxes = bbox3d2corners(bboxes)
+    
+#     vis_objs = [pc, mesh_frame]
+#     for i in range(len(bboxes)):
+#         bbox = bboxes[i]
+#         if labels is None:
+#             color = [1, 1, 0]
+#         else:
+#             if labels[i] >= 0 and labels[i] < 3:
+#                 color = COLORS[labels[i]]
+#             else:
+#                 color = COLORS[-1]
+#         vis_objs.append(bbox_obj(bbox, color=color))
+#     vis_core(vis_objs)
 
 
 def vis_img_3d(img, image_points, labels, rt=True):

@@ -12,6 +12,7 @@ from pointpillars.utils import setup_seed, read_points, read_calib, read_label, 
 from pointpillars.model import PointPillars
 
 
+
 def point_range_filter(pts, point_range=[0, -39.68, -3, 69.12, 39.68, 1]):
     '''
     data_dict: dict(pts, gt_bboxes_3d, gt_labels, gt_names, difficulty)
@@ -80,11 +81,15 @@ def main(args):
         image_shape = img.shape[:2]
         result_filter = keep_bbox_from_image_range(result_filter, tr_velo_to_cam, r0_rect, P2, image_shape)
 
-    result_filter = keep_bbox_from_lidar_range(result_filter, pcd_limit_range)
+    # result_filter = keep_bbox_from_lidar_range(result_filter, pcd_limit_range)
     lidar_bboxes = result_filter['lidar_bboxes']
     labels, scores = result_filter['labels'], result_filter['scores']
-
-    vis_pc(pc, bboxes=lidar_bboxes, labels=labels)
+    
+    
+    # vis_pc(pc, bboxes=lidar_bboxes, labels=labels)
+    sample_id = os.path.splitext(os.path.basename(args.pc_path))[0]
+    output_path = os.path.join("results", f"{sample_id}.png")
+    vis_pc(pc, bboxes=lidar_bboxes, labels=labels, out_image=output_path)
 
     if calib_info is not None and img is not None:
         bboxes2d, camera_bboxes = result_filter['bboxes2d'], result_filter['camera_bboxes'] 
@@ -126,7 +131,7 @@ def main(args):
         
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Configuration Parameters')
-    parser.add_argument('--ckpt', default='pretrained/epoch_160.pth', help='your checkpoint for kitti')
+    parser.add_argument('--ckpt', default='pillar_logs/checkpoints/epoch_20_overffiting.pth', help='your checkpoint for kitti')
     parser.add_argument('--pc_path', help='your point cloud path')
     parser.add_argument('--calib_path', default='', help='your calib file path')
     parser.add_argument('--gt_path', default='', help='your ground truth path')
@@ -136,3 +141,5 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     main(args)
+
+# python test.py --pc_path /home/user/deep_learning/Costume-Point-Pillars/pc 

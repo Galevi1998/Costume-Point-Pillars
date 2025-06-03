@@ -10,13 +10,16 @@ import subprocess
 # Environment Setup
 # ------------------------------#
 os.environ["LIBGL_ALWAYS_INDIRECT"] = "1"
+os.environ["LIBGL_ALWAYS_SOFTWARE"] = "1"
 os.environ["XDG_RUNTIME_DIR"] = "/tmp"
 
 # ------------------------------#
 # Project Setup
 # ------------------------------#
-REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
-KITTI_DATA_PATH = os.path.join(REPO_ROOT, "training", "training")
+# REPO_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", ".."))
+REPO_ROOT = "/home/user/deep_learning/Costume-Point-Pillars/datasets/INNOVIZ/"
+# KITTI_DATA_PATH = os.path.join(REPO_ROOT, "training", "training")
+KITTI_DATA_PATH = os.path.join(REPO_ROOT, "training")
 sys.path.append(REPO_ROOT)
 
 VELODYNE_DIR = os.path.join(KITTI_DATA_PATH, "velodyne")
@@ -148,17 +151,40 @@ def render_pointcloud_to_image(points, output_png_path):
 # Main Loop
 # ------------------------------#
 def main():
-    velodyne_files = sorted([f for f in os.listdir(VELODYNE_DIR) if f.endswith('.bin')])
+    counterio=0
+    
+    velodyne_files = sorted([f for f in os.listdir(VELODYNE_DIR) if f.endswith('.bin')])[125:]
     print(f"🔍 Found {len(velodyne_files)} point cloud files\n")
     os.chdir(os.path.join(os.path.dirname(__file__)))  # Ensures script runs from the correct directory
 
+
+    for filename in velodyne_files:
+        start_time = time.time()
+        filepath = os.path.join(VELODYNE_DIR, filename)
+        points = np.fromfile(filepath, dtype=np.float32).reshape(-1, 4)
+
+        print(f"📦 Loaded {filename}: shape = {points.shape}")
+        base_name = os.path.splitext(filename)[0]
+        output_png_path = os.path.join(IMAGE_DIR, f"{base_name}.png")
+
+        center, eye, w, h, fov = render_pointcloud_to_image(points, output_png_path)
+
+        output_calib_path = os.path.join(CALIB_DIR, f"{base_name}.txt")
+        calib = compute_calibration_from_render(fov, center, eye, w, h)
+        save_calib_kitti_format(output_calib_path, calib)
+
+        print(f"⏱️ Frame render time: {time.time() - start_time:.2f} sec\n")
+        if(counterio==10):
+            break
+        # break  # Remove for full loop
+        
 # Run preprocessing
-    # print("🚀 Preprocessing KITTI dataset...")
-    # subprocess.run("python3 pre_process_kitti.py --data_root /lidar3d_detection_ws/training", shell=True, check=True)
+    print("🚀 Preprocessing KITTI dataset...")
+    subprocess.run("python3 pre_process_kitti.py --data_root /home/user/deep_learning/Costume-Point-Pillars/datasets/INNOVIZ", shell=True, check=True)
 
 # Run training from scratch
-    print("🧠 Starting training from scratch (no transfer learning)...")
-    subprocess.run("python3 train.py --data_root /lidar3d_detection_ws/training", shell=True, check=True)
+    # print("🧠 Starting training from scratch (no transfer learning)...")
+    # subprocess.run("python3 train.py --data_root /lidar3d_detection_ws/training", shell=True, check=True)
 
     # counterio=0
     # for filename in velodyne_files:

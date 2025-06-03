@@ -1,1 +1,8 @@
 .DS_Store
+.vevn
+.vscode
+__pycache__
+pc
+**.egg-info
+build
+datasets
